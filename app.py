@@ -466,8 +466,8 @@ logging.basicConfig(
 logger = logging.getLogger("ehab_system")
 
 # ========== إعدادات النظام الأساسية ==========
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "7687262918:AAH8mBdHAALzhwZBh2HCe8DHu-oRqMEePg8")
-API_BASE_URL = os.environ.get("API_BASE_URL", "[https://ehab10-host-1.onrender.com](https://ehab10-host-1.onrender.com)")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "9090360556:AAFU2etPnCt5DpJsEtcnEVps3B_izACOwSk")
+API_BASE_URL = os.environ.get("API_BASE_URL", "[https://ehab70-host.onrender.com](https://ehab70-host.onrender.com)")
 
 ADMIN_TELEGRAM_IDS = [1002670694]
 
@@ -481,16 +481,6 @@ DEVELOPER_INFO = "🛠 طُوِّر بواسطة: *ꪝ🇾🇪إأبـტּٱإ�
     WAITING_FOR_DELETE_USERNAME,
     WAITING_FOR_AI_PROMPT,
 ) = range(5)
-
-
-
-@app.route('/')
-def home():
-    index_path = os.path.join(BASE_DIR, 'index.html')
-    if os.path.exists(index_path):
-        return send_from_directory(BASE_DIR, 'index.html')
-    return "⚠️ ملف الواجهة (index.html) غير موجود في المجلد الجذر للخادم."
-
 
 
 # ─────────────────────────────────────────────────
