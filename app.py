@@ -483,6 +483,16 @@ DEVELOPER_INFO = "🛠 طُوِّر بواسطة: *ꪝ🇾🇪إأبـტּٱإ�
 ) = range(5)
 
 
+
+@app.route('/')
+def home():
+    index_path = os.path.join(BASE_DIR, 'index.html')
+    if os.path.exists(index_path):
+        return send_from_directory(BASE_DIR, 'index.html')
+    return "⚠️ ملف الواجهة (index.html) غير موجود في المجلد الجذر للخادم."
+
+
+
 # ─────────────────────────────────────────────────
 #  وظائف الأمان والحماية والتنقية (Sanitization)
 # ─────────────────────────────────────────────────
@@ -1285,3 +1295,4 @@ if __name__ == "__main__":
         run_bot(token, bot_name)
     else:
         run_bot(BOT_TOKEN, "EHAB_Control_And_AI_Repair_System")
+
