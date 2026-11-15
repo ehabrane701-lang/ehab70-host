@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ehab-control-system
+    env: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: BOT_TOKEN
+        value: "7687262918:AAH8mBdHAALzhwZBh2HCe8DHu-oRqMEePg8"
+      - key: API_BASE_URL
+        value: "https://ehab10-host-1.onrender.com"
+      - key: SECRET_KEY
+        value: "ehab_super_secure_secret_key_2026"

@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#090909">
+<title>𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#090909;--panel:#121212;--panel2:#181818;--border:#292929;
+  --text:#eee;--muted:#8b8b8b;--accent:#e63946;--accent2:#9f1729;
+  --hover:#222;--shadow:rgba(0,0,0,.55);
+  --ok:#4ade80;--warn:#facc15;--danger:#ef4444;
+  --topbar:48px;--tabs:36px;--status:22px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px);
+  --safe-right:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  margin:0;padding:0;height:100%;width:100%;
+  overflow:hidden;position:fixed;inset:0;
+  overscroll-behavior:none;
+  background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+  font-size:14px;
+  -webkit-text-size-adjust:100%;
+}
+@supports(height:100dvh){html,body{height:100dvh}}
+@supports(-webkit-touch-callout:none){
+  html,body{height:-webkit-fill-available}
+}
+body{touch-action:manipulation}
+button,input,select,textarea{font:inherit;color:inherit;touch-action:manipulation}
+button{cursor:pointer;border:0;background:none}
+
+#app{
+  height:100%;
+  padding-top:var(--safe-top);
+  padding-bottom:var(--safe-bottom);
+  padding-left:var(--safe-left);
+  padding-right:var(--safe-right);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+/* ===== Topbar ===== */
+#topbar{
+  height:var(--topbar);flex:none;
+  display:flex;align-items:center;gap:6px;
+  padding:6px 8px;
+  background:var(--panel);
+  border-bottom:2px solid var(--accent);
+  z-index:10;
+}
+.icon{
+  width:38px;height:36px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:9px;
+  background:transparent;color:var(--text);
+  font-size:17px;transition:.12s;
+  flex:none;
+}
+.icon:active{background:var(--accent);color:#fff;transform:scale(.94)}
+.icon.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0}
+#title{
+  flex:1;min-width:0;text-align:center;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  font-size:12px;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+#title b{
+  color:var(--text);font-size:13px;display:inline-block;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:85%;
+}
+#dirty{color:var(--accent);font-size:16px;flex:none}
+
+/* ===== Tabs ===== */
+#tabs{
+  height:var(--tabs);flex:none;
+  display:flex;align-items:stretch;
+  overflow-x:auto;overflow-y:hidden;
+  background:var(--panel2);
+  border-bottom:1px solid var(--border);
+  direction:ltr;scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+}
+#tabs::-webkit-scrollbar{height:0}
+.tab{
+  flex:none;display:flex;align-items:center;gap:7px;
+  padding:0 11px;border-right:1px solid var(--border);
+  font-size:12px;color:var(--muted);background:var(--panel2);
+  transition:.15s;max-width:190px;cursor:pointer;
+  user-select:none;white-space:nowrap;
+}
+.tab.active{color:var(--text);background:var(--bg);box-shadow:inset 0 -2px var(--accent)}
+.tab.dirty .name::after{content:" ●";color:var(--accent);font-size:14px}
+.tab .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.tab .x{color:var(--muted);font-size:14px;padding:0 4px;border-radius:4px;transition:.12s;flex:none}
+.tab .x:hover,.tab .x:active{background:var(--accent);color:#fff}
+
+/* ===== Work ===== */
+#work{flex:1;min-height:0;display:flex;position:relative;overflow:hidden}
+#editor{flex:1;min-width:0;min-height:0;direction:ltr;position:relative}
+
+/* ===== Status Bar ===== */
+#status{
+  height:var(--status);flex:none;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 8px;font-size:10px;color:var(--muted);
+  background:var(--panel2);direction:ltr;
+  font-family:ui-monospace,Consolas,monospace;
+  overflow:hidden;white-space:nowrap;
+  border-top:1px solid var(--border);
+}
+#status .grp{display:flex;gap:6px;align-items:center;min-width:0}
+#status .item{cursor:pointer;padding:2px 4px;border-radius:3px;transition:.12s}
+#status .item:active{background:var(--hover);color:var(--text)}
+#status .sep{color:var(--border)}
+
+/* ===== Overlay ===== */
+#overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  z-index:35;display:none;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  opacity:0;transition:opacity .22s;
+}
+#overlay.show{display:block;opacity:1}
+
+/* ===== Drawer ===== */
+.drawer{
+  position:fixed;top:0;bottom:0;
+  width:min(300px,86vw);
+  background:var(--panel);
+  z-index:60;
+  display:flex;flex-direction:column;
+  transition:transform .26s cubic-bezier(.4,0,.2,1);
+  padding-top:var(--safe-top);
+  padding-bottom:var(--safe-bottom);
+  will-change:transform;
+}
+#explorer{
+  right:0;
+  border-left:2px solid var(--accent);
+  transform:translateX(100%);
+  box-shadow:-12px 0 35px var(--shadow);
+}
+#explorer.open{transform:translateX(0)}
+
+#outline{
+  left:0;
+  border-right:2px solid var(--accent);
+  transform:translateX(-100%);
+  box-shadow:12px 0 35px var(--shadow);
+}
+#outline.open{transform:translateX(0)}
+
+.drawerHead{
+  height:46px;flex:none;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;
+  border-bottom:1px solid var(--border);
+  font-size:11px;letter-spacing:1.5px;color:var(--muted);
+  text-transform:uppercase;font-weight:800;
+}
+.drawerHead .title{color:var(--text);font-size:12px;letter-spacing:.5px}
+.drawerHead .actions{display:flex;gap:4px}
+.drawerHead .actions button{
+  width:28px;height:28px;border-radius:7px;
+  border:1px solid var(--border);color:var(--muted);
+  font-size:13px;display:inline-flex;align-items:center;justify-content:center;
+  transition:.12s;
+}
+.drawerHead .actions button:active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+#tree{flex:1;overflow-y:auto;padding:6px 0;-webkit-overflow-scrolling:touch}
+.treeItem{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 10px;
+  font-size:13px;color:var(--text);
+  cursor:pointer;user-select:none;white-space:nowrap;
+  direction:rtl;
+  transition:.1s;
+  min-height:36px;
+}
+.treeItem:active{background:var(--hover)}
+.treeItem.active{background:var(--hover);border-right:3px solid var(--accent);padding-right:7px}
+.treeItem .ico{font-size:14px;width:18px;text-align:center;flex:none}
+.treeItem .nm{
+  flex:1;overflow:hidden;text-overflow:ellipsis;
+  direction:ltr;text-align:left;
+  font-family:ui-monospace,Consolas,monospace;font-size:12.5px;
+}
+.treeItem .caret{font-size:9px;width:12px;text-align:center;color:var(--muted);flex:none}
+.treeChildren{padding-inline-start:14px}
+.treeItem.locked{opacity:.55}
+
+.drawerFooter{
+  flex:none;display:flex;flex-direction:column;gap:8px;
+  padding:10px 12px;border-top:1px solid var(--border);
+  background:var(--panel2);
+}
+.linkBtn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:11px 12px;border-radius:10px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+  font-size:13px;font-weight:700;text-decoration:none;
+  transition:.12s;
+}
+.linkBtn:active{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(.98)}
+.linkBtn .lb-sub{font-size:11px;color:var(--muted);font-weight:500;direction:ltr}
+.linkBtn:active .lb-sub{color:#fff}
+
+#outlineList{flex:1;overflow-y:auto;padding:6px 0;-webkit-overflow-scrolling:touch}
+.outItem{
+  padding:8px 12px;font-size:12px;color:var(--text);
+  cursor:pointer;font-family:ui-monospace,Consolas,monospace;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  direction:ltr;text-align:left;
+  border-right:2px solid transparent;
+  min-height:34px;display:flex;align-items:center;gap:6px;
+  transition:.1s;
+}
+.outItem:active{background:var(--hover);border-right-color:var(--accent)}
+.outItem .oico{color:var(--accent);font-size:11px;flex:none}
+.outItem.level1{font-weight:600}
+.outItem.level2{padding-left:24px}
+.outItem.level3{padding-left:36px;font-size:11px;color:var(--muted)}
+.outlineEmpty{padding:24px 16px;text-align:center;color:var(--muted);font-size:12px}
+
+/* ===== Modal ===== */
+.modal{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.75);
+  display:none;align-items:center;justify-content:center;
+  padding:18px;
+  padding-top:calc(18px + var(--safe-top));
+  padding-bottom:calc(18px + var(--safe-bottom));
+}
+.modal.show{display:flex;animation:fadeIn .16s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.box{
+  width:100%;max-width:440px;
+  background:var(--panel);
+  border:2px solid var(--accent);
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 20px 60px #000;
+  max-height:86vh;max-height:86dvh;
+  display:flex;flex-direction:column;
+  animation:popIn .2s cubic-bezier(.2,.9,.3,1.1);
+}
+@keyframes popIn{from{transform:scale(.94);opacity:.6}to{transform:scale(1);opacity:1}}
+.boxHead{
+  padding:14px 16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-weight:800;font-size:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.boxBody{padding:16px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.boxActions{
+  display:flex;gap:8px;padding:0 16px 16px;
+  flex-direction:row;
+}
+.boxActions button{
+  flex:1;padding:12px;border-radius:9px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+  font-weight:600;font-size:14px;
+}
+.boxActions button:active{opacity:.85;transform:scale(.98)}
+.boxActions .ok{background:var(--accent);border:0;color:#fff}
+.boxActions .danger{background:var(--danger);border:0;color:#fff}
+
+.input,.select{
+  width:100%;padding:11px 12px;
+  background:var(--bg);color:var(--text);
+  border:1px solid var(--border);border-radius:9px;outline:none;
+  font-size:14px;
+  -webkit-appearance:none;appearance:none;
+}
+.input:focus,.select:focus{border-color:var(--accent)}
+.select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='%238b8b8b' d='M6 8L2 4h8z'/></svg>");
+  background-repeat:no-repeat;
+  background-position:left 12px center;
+  padding-left:32px;
+}
+.label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px}
+.row{margin-bottom:12px}
+.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+
+/* ===== Command Center ===== */
+#cmdCenter{
+  position:fixed;z-index:150;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.96);
+  width:min(560px,94vw);
+  max-height:80vh;max-height:80dvh;
+  background:var(--panel);
+  border:1px solid var(--accent);
+  border-radius:14px;
+  box-shadow:0 20px 70px rgba(0,0,0,.85);
+  display:none;flex-direction:column;
+  overflow:hidden;opacity:0;
+  transition:.18s;
+}
+#cmdCenter.show{display:flex;opacity:1;transform:translate(-50%,-50%) scale(1)}
+.cmdHead{
+  padding:12px 16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-weight:800;letter-spacing:2px;
+  font-size:12px;text-align:center;
+  font-family:ui-monospace,Consolas,monospace;
+}
+.cmdSearch{
+  width:100%;padding:14px 16px;border:0;
+  border-bottom:1px solid var(--border);
+  background:var(--bg);color:var(--text);outline:none;
+  font-size:14px;direction:rtl;
+}
+.cmdList{overflow-y:auto;max-height:60vh;max-height:60dvh;-webkit-overflow-scrolling:touch}
+.cmdItem{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;font-size:13px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;transition:.1s;
+  min-height:46px;
+}
+.cmdItem:active,.cmdItem.sel{background:var(--hover);border-right:3px solid var(--accent);padding-right:13px}
+.cmdItem .key{
+  margin-inline-start:auto;
+  font-size:10px;color:var(--muted);
+  font-family:ui-monospace,monospace;
+  background:var(--bg);border:1px solid var(--border);
+  padding:2px 6px;border-radius:4px;
+}
+.cmdItem .num{
+  width:20px;height:20px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:4px;font-size:10px;color:var(--accent);
+  font-family:monospace;flex:none;
+}
+.cmdEmpty{padding:32px;text-align:center;color:var(--muted);font-size:12px}
+.cmdGroup{
+  padding:6px 16px;font-size:10px;color:var(--accent);
+  font-weight:800;letter-spacing:1.5px;
+  background:var(--panel2);
+  border-bottom:1px solid var(--border);
+}
+
+/* ===== Bottom Sheet ===== */
+#sheet{
+  position:fixed;left:0;right:0;bottom:0;
+  z-index:120;
+  background:var(--panel);
+  border-top:2px solid var(--accent);
+  border-radius:18px 18px 0 0;
+  transform:translateY(100%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+  max-height:75vh;max-height:75dvh;
+  display:flex;flex-direction:column;
+  box-shadow:0 -12px 40px rgba(0,0,0,.6);
+  padding-bottom:var(--safe-bottom);
+  will-change:transform;
+}
+#sheet.show{transform:translateY(0)}
+.sheetHead{
+  height:46px;flex:none;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  border-bottom:1px solid var(--border);
+  font-weight:700;font-size:13px;
+  position:relative;
+}
+.sheetHead::before{
+  content:"";position:absolute;top:6px;left:50%;
+  transform:translateX(-50%);
+  width:40px;height:4px;background:var(--border);border-radius:4px;
+}
+.sheetBody{overflow-y:auto;padding:6px 0 24px;flex:1;-webkit-overflow-scrolling:touch}
+.sheetItem{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 18px;font-size:14px;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  min-height:50px;
+}
+.sheetItem:active{background:var(--hover)}
+.sheetItem.danger{color:var(--danger)}
+.sheetItem .ico{font-size:17px;width:22px;text-align:center;flex:none}
+
+/* ===== Toast ===== */
+#toast{
+  position:fixed;z-index:200;
+  bottom:calc(28px + var(--safe-bottom));
+  left:50%;transform:translate(-50%,20px);
+  opacity:0;pointer-events:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;padding:10px 20px;border-radius:22px;
+  font-size:12.5px;transition:.24s;
+  white-space:nowrap;max-width:90vw;
+  overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 6px 24px rgba(0,0,0,.4);
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.ok{background:linear-gradient(135deg,#16a34a,#15803d)}
+#toast.warn{background:linear-gradient(135deg,#eab308,#ca8a04)}
+#toast.err{background:linear-gradient(135deg,#dc2626,#991b1b)}
+
+/* ===== Find Bar ===== */
+#findBar{
+  position:fixed;z-index:32;
+  top:calc(var(--safe-top) + var(--topbar) + var(--tabs) + 8px);
+  right:calc(8px + var(--safe-right));
+  left:calc(8px + var(--safe-left));
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+  padding:8px;
+  display:none;flex-direction:column;gap:6px;
+}
+#findBar.show{display:flex}
+#findBar .fr-row{display:flex;align-items:center;gap:5px}
+#findBar input{
+  flex:1;padding:8px 10px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:7px;outline:none;font-size:13px;color:var(--text);
+  min-width:60px;
+}
+#findBar input:focus{border-color:var(--accent)}
+#findBar button{
+  padding:8px 10px;
+  background:var(--panel2);border:1px solid var(--border);
+  border-radius:7px;color:var(--text);font-size:12px;cursor:pointer;
+  flex:none;min-width:34px;
+}
+#findBar button:active{background:var(--accent);color:#fff}
+#findBar .fr-info{font-size:11px;color:var(--muted);padding:0 6px;min-width:50px;text-align:center;font-family:monospace}
+#findBar button.active{background:var(--accent);color:#fff}
+
+.searchResults{max-height:46vh;max-height:46dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.srFile{
+  padding:8px 12px 4px;
+  font-size:11px;color:var(--accent);font-weight:700;
+  background:var(--panel2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  direction:ltr;text-align:left;
+  font-family:ui-monospace,monospace;
+}
+.srItem{
+  padding:9px 12px;font-size:12px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  font-family:ui-monospace,Consolas,monospace;
+  direction:ltr;text-align:left;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.srItem:active{background:var(--hover)}
+.srLine{color:var(--muted);font-size:11px;min-width:30px;text-align:right;flex:none}
+.srText{color:var(--text);word-break:break-all;flex:1;line-height:1.4}
+.srText mark{background:var(--accent);color:#fff;padding:0 2px;border-radius:2px}
+
+/* ===== Loader ===== */
+#loader{
+  position:fixed;inset:0;z-index:300;
+  overflow:hidden;background:#030507;
+  font-family:Orbitron,Arial,sans-serif;color:#fff;
+  transition:opacity .5s ease;
+}
+#loader.hidden{opacity:0;pointer-events:none}
+#loader:before{
+  content:"";position:fixed;inset:0;
+  background:
+    radial-gradient(circle at 50% 48%,rgba(0,195,255,.12),transparent 27%),
+    radial-gradient(circle at 20% 20%,rgba(83,0,255,.08),transparent 30%),
+    radial-gradient(circle at 85% 80%,rgba(0,120,255,.06),transparent 32%);
+}
+#loader .grid{
+  position:fixed;inset:-30%;opacity:.18;
+  background-image:
+    linear-gradient(rgba(0,190,255,.18) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,190,255,.18) 1px,transparent 1px);
+  background-size:55px 55px;
+  transform:perspective(500px) rotateX(65deg) translateY(28%);
+  animation:gridMove 8s linear infinite;
+}
+@keyframes gridMove{to{transform:perspective(500px) rotateX(65deg) translateY(34%)}}
+#loader .wrap{
+  position:relative;width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+}
+#loader .hud{
+  position:absolute;width:min(84vw,440px);height:min(84vw,440px);
+  border-radius:50%;border:1px solid rgba(0,220,255,.13);
+}
+#loader .hud:before,#loader .hud:after{content:"";position:absolute;border-radius:50%}
+#loader .hud:before{inset:18px;border:1px dashed rgba(0,220,255,.2);animation:spin 18s linear infinite}
+#loader .hud:after{inset:48px;border:1px solid rgba(255,255,255,.06)}
+#loader .arc{
+  position:absolute;width:min(84vw,440px);height:min(84vw,440px);
+  border-radius:50%;border:5px solid transparent;
+  border-top-color:#00d9ff;border-right-color:#008cff;
+  filter:drop-shadow(0 0 9px #00bfff);
+  animation:spin 2.2s linear infinite;
+}
+#loader .arc2{
+  position:absolute;width:min(70vw,360px);height:min(70vw,360px);
+  border-radius:50%;border:2px solid transparent;
+  border-bottom-color:#744cff;border-left-color:#744cff;
+  opacity:.8;animation:spin 4s linear infinite reverse;
+}
+#loader .center{position:relative;text-align:center;z-index:5}
+#loader .symbol{
+  width:105px;height:105px;margin:auto auto 25px;
+  position:relative;
+  filter:drop-shadow(0 0 20px rgba(0,200,255,.45));
+}
+#loader .symbol:before{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:linear-gradient(145deg,#fff 0%,#6e7c87 27%,#11181e 60%,#00bfff 100%);
+}
+#loader .symbol:after{
+  content:"";position:absolute;inset:5px;border-radius:50%;
+  background:url("https://i.ibb.co/XZCMCwLK/image.png") center/cover no-repeat;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.65),0 0 14px rgba(0,217,255,.35);
+  border:1px solid rgba(130,220,255,.55);
+}
+#loader .name{
+  font-size:clamp(48px,14vw,82px);font-weight:900;
+  letter-spacing:.16em;margin-left:.16em;line-height:1;
+  background:linear-gradient(180deg,#fff 0%,#b9d5df 35%,#5e7480 52%,#fff 78%,#4ad9ff 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 14px rgba(0,195,255,.32));
+}
+#loader .line{
+  width:170px;height:2px;margin:20px auto 17px;
+  background:linear-gradient(90deg,transparent,#00d9ff,transparent);
+  box-shadow:0 0 12px #00bfff;
+}
+#loader .status{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  font-size:10px;letter-spacing:.32em;color:#718995;
+  text-transform:uppercase;
+}
+#loader .dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#00e1ff;box-shadow:0 0 12px #00e1ff;
+  animation:pulse 1s infinite;
+}
+#loader .progress{width:150px;height:2px;margin:20px auto 0;background:#18252c;overflow:hidden}
+#loader .progress span{
+  display:block;width:42%;height:100%;
+  background:#00d9ff;box-shadow:0 0 10px #00d9ff;
+  animation:load 2.4s ease-in-out infinite;
+}
+#loader .corner{position:absolute;width:75px;height:75px;opacity:.5}
+#loader .c1{top:28px;left:28px;border-top:1px solid #00cfff;border-left:1px solid #00cfff}
+#loader .c2{top:28px;right:28px;border-top:1px solid #00cfff;border-right:1px solid #00cfff}
+#loader .c3{bottom:28px;left:28px;border-bottom:1px solid #00cfff;border-left:1px solid #00cfff}
+#loader .c4{bottom:28px;right:28px;border-bottom:1px solid #00cfff;border-right:1px solid #00cfff}
+#loader .scan{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,220,255,.35),transparent);
+  box-shadow:0 0 10px rgba(0,220,255,.2);
+  animation:scan 4s ease-in-out infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{50%{opacity:.25;transform:scale(.65)}}
+@keyframes load{0%{transform:translateX(-160px)}50%{transform:translateX(80px)}100%{transform:translateX(160px)}}
+@keyframes scan{0%,100%{top:15%;opacity:0}20%{opacity:1}80%{opacity:1}100%{top:85%}}
+
+/* ===== Tablet & Desktop ===== */
+@media(min-width:900px){
+  :root{--topbar:52px;--tabs:38px;--status:26px}
+  #explorer, #outline{
+    position:relative;transform:none;box-shadow:none;
+    padding-top:0;padding-bottom:0;
+    height:auto;width:260px;
+    border-radius:0;
+  }
+  #outline{width:220px}
+  #work{display:flex;flex-direction:row}
+  #work > #editor{order:2;flex:1}
+  #work > #outline{order:1;border-right:1px solid var(--border);border-left:0}
+  #work > #explorer{order:3;border-left:1px solid var(--border);border-right:0}
+  #work > #findBar{
+    position:absolute;top:10px;
+    right:calc(260px + 12px);
+    left:calc(220px + 12px);
+  }
+  #explorer.hidden,#outline.hidden{display:none}
+  .drawerHead .actions button:last-child{display:none}
+}
+@media(max-width:899px){
+  #explorer,#outline{display:flex}
+  #explorer:not(.open),#outline:not(.open){pointer-events:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <button class="icon" id="menu" aria-label="Explorer">☰</button>
+    <div id="title"><b id="titleName">𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜</b><span id="dirty"></span></div>
+    <button class="icon" id="save" aria-label="Save">💾</button>
+    <button class="icon primary" id="cmdBtn" aria-label="Commands">⌘</button>
+  </div>
+  <div id="tabs"></div>
+  <div id="work">
+    <div id="editor"></div>
+    <aside id="outline" class="drawer">
+      <div class="drawerHead">
+        <span class="title">📋 OUTLINE</span>
+        <div class="actions">
+          <button id="outlineClose" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div id="outlineList"></div>
+    </aside>
+    <aside id="explorer" class="drawer">
+      <div class="drawerHead">
+        <span class="title">📁 EXPLORER</span>
+        <div class="actions">
+          <button id="newFileExp" title="ملف">＋</button>
+          <button id="newFolderExp" title="مجلد">📁</button>
+          <button id="expClose" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div id="tree"></div>
+    </aside>
+    <div id="findBar">
+      <div class="fr-row">
+        <input id="findInput" placeholder="بحث..." autocomplete="off">
+        <span class="fr-info" id="findInfo">0/0</span>
+        <button id="findPrev" title="السابق">↑</button>
+        <button id="findNext" title="التالي">↓</button>
+        <button id="findClose" title="إغلاق">✕</button>
+      </div>
+      <div class="fr-row">
+        <input id="replaceInput" placeholder="استبدال..." autocomplete="off">
+        <button id="replaceOne" title="استبدال">⟳</button>
+        <button id="replaceAll" title="استبدال الكل">⟳⟳</button>
+        <button id="findRegex" title="Regex">.*</button>
+      </div>
+    </div>
+  </div>
+  <div id="status">
+    <div class="grp">
+      <span class="item" id="sPos">Ln 1, Col 1</span>
+      <span class="sep">│</span>
+      <span class="item" id="sSpaces">Spaces: 2</span>
+      <span class="sep">│</span>
+      <span class="item" id="sEol">LF</span>
+    </div>
+    <div class="grp">
+      <span class="item" id="sLang">Python</span>
+      <span class="sep">│</span>
+      <span class="item" id="sSize">0 B</span>
+      <span class="sep">│</span>
+      <span class="item" id="sSave">✓</span>
+    </div>
+  </div>
+</div>
+
+<div id="overlay"></div>
+
+<!-- Modals -->
+<div class="modal" id="inputModal">
+  <div class="box">
+    <div class="boxHead" id="inputTitle">إدخال</div>
+    <div class="boxBody">
+      <div class="row">
+        <label class="label" id="inputLabel">القيمة</label>
+        <input class="input" id="inputField" spellcheck="false">
+      </div>
+      <div class="hint" id="inputHint"></div>
+    </div>
+    <div class="boxActions">
+      <button id="inputCancel">إلغاء</button>
+      <button class="ok" id="inputOk">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="newFileModal">
+  <div class="box">
+    <div class="boxHead">＋ ملف جديد</div>
+    <div class="boxBody">
+      <div class="row">
+        <label class="label">اسم الملف</label>
+        <input class="input" id="newFileName" placeholder="script.py" spellcheck="false" autocomplete="off">
+      </div>
+      <div class="row">
+        <label class="label">اللغة</label>
+        <select class="select" id="newFileLang"></select>
+      </div>
+      <div class="hint">المسار: <span id="newFileDir">/</span></div>
+    </div>
+    <div class="boxActions">
+      <button id="newFileCancel">إلغاء</button>
+      <button class="ok" id="newFileOk">إنشاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="box">
+    <div class="boxHead" id="confirmTitle">تأكيد</div>
+    <div class="boxBody" id="confirmMsg" style="color:var(--muted);font-size:13px;line-height:1.7"></div>
+    <div class="boxActions">
+      <button id="confirmNo">إلغاء</button>
+      <button class="ok" id="confirmYes">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="box">
+    <div class="boxHead">⚙️ الإعدادات</div>
+    <div class="boxBody">
+      <div class="row">
+        <label class="label">الثيم</label>
+        <select class="select" id="setTheme"></select>
+      </div>
+      <div class="row">
+        <label class="label">حجم الخط</label>
+        <input class="input" type="number" id="setFont" min="9" max="32" value="14">
+      </div>
+      <div class="row">
+        <label class="label">حجم Tab</label>
+        <select class="select" id="setTab">
+          <option value="2">2</option><option value="4">4</option><option value="8">8</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label">Word Wrap</label>
+        <select class="select" id="setWrap">
+          <option value="on">On</option><option value="off">Off</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label">Minimap</label>
+        <select class="select" id="setMinimap">
+          <option value="0">Off</option><option value="1">On</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label">Auto Close Brackets</label>
+        <select class="select" id="setBrackets">
+          <option value="always">Always</option>
+          <option value="languageDefined">Auto</option>
+          <option value="beforeWhitespace">Before Space</option>
+          <option value="never">Never</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label">Format On Paste</label>
+        <select class="select" id="setFormatPaste">
+          <option value="1">On</option><option value="0">Off</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label">Auto Save (محلي على جهازك)</label>
+        <select class="select" id="setAutoSave">
+          <option value="1">مفعّل</option><option value="0">موقوف</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label">ملفات محظورة (سطر لكل نمط)</label>
+        <textarea class="input" id="setBlocked" rows="4" style="font-family:monospace;font-size:12px;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="boxActions">
+      <button id="settingsClose">إغلاق</button>
+      <button class="ok" id="settingsSave">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="projectSearchModal">
+  <div class="box" style="max-width:620px">
+    <div class="boxHead">🔍 بحث في المشروع</div>
+    <div class="boxBody">
+      <div class="row">
+        <input class="input" id="projSearchInput" placeholder="ابحث في كل الملفات..." autocomplete="off">
+      </div>
+      <div class="row" style="display:flex;gap:14px;align-items:center">
+        <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="projSearchRegex"> Regex
+        </label>
+        <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="projSearchCase"> حساس للحالة
+        </label>
+      </div>
+      <div class="searchResults" id="projResults"></div>
+    </div>
+    <div class="boxActions">
+      <button id="projSearchClose">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="historyModal">
+  <div class="box">
+    <div class="boxHead">🕘 السجل المحلي</div>
+    <div class="boxBody" id="historyBody"></div>
+    <div class="boxActions">
+      <button id="historyClose">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- Command Center -->
+<div id="cmdCenter">
+  <div class="cmdHead">⌘ DARK COMMAND CENTER</div>
+  <input class="cmdSearch" id="cmdSearch" placeholder="ابحث عن أمر..." autocomplete="off">
+  <div class="cmdList" id="cmdList"></div>
+</div>
+
+<!-- Bottom Sheet -->
+<div id="sheet">
+  <div class="sheetHead"><span id="sheetTitle">الخيارات</span><button class="icon" id="sheetClose" style="width:32px;height:28px">✕</button></div>
+  <div class="sheetBody" id="sheetBody"></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Loader -->
+<div id="loader">
+  <div class="grid"></div><div class="scan"></div>
+  <div class="wrap">
+    <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+    <div class="hud"></div><div class="arc"></div><div class="arc2"></div>
+    <main class="center">
+      <div class="symbol"></div>
+      <div class="name">DARK</div>
+      <div class="line"></div>
+      <div class="status"><span class="dot"></span><span>SYSTEM INITIALIZING</span></div>
+      <div class="progress"><span></span></div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ Viewport Fix for Mobile Keyboard ============ */
+function syncViewport(){
+  if(window.visualViewport){
+    document.body.style.height=window.visualViewport.height+"px";
+    if(editor)editor.layout();
+  }
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize",syncViewport);
+  window.visualViewport.addEventListener("scroll",syncViewport);
+}
+
+/* Workers من CDN */
+window.MonacoEnvironment={getWorkerUrl:function(){
+  return URL.createObjectURL(new Blob([
+    "self.MonacoEnvironment={baseUrl:'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/'};"+
+    "importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/base/worker/workerMain.js');"
+  ],{type:"text/javascript"}));
+}};
+
+/* ============ Themes ============ */
+const THEMES={
+  dark:{name:"Dark",ui:{bg:"#090909",panel:"#121212",panel2:"#181818",border:"#292929",text:"#eeeeee",muted:"#8b8b8b",accent:"#e63946",accent2:"#9f1729",hover:"#222222"},monaco:"vs-dark"},
+  midnight:{name:"Midnight",ui:{bg:"#080d18",panel:"#0d1420",panel2:"#111a2b",border:"#1c2a44",text:"#d6e4ff",muted:"#6b7a99",accent:"#4f8cff",accent2:"#2d5fc7",hover:"#141f33"},monaco:"dark-midnight"},
+  dracula:{name:"Dracula",ui:{bg:"#282a36",panel:"#21222c",panel2:"#2b2d3a",border:"#383a4a",text:"#f8f8f2",muted:"#8b8d9a",accent:"#bd93f9",accent2:"#8b5cf6",hover:"#343746"},monaco:"dark-dracula"},
+  cyber:{name:"Cyber",ui:{bg:"#0a0e14",panel:"#0f141d",panel2:"#131a26",border:"#1f2c3d",text:"#c8d6e5",muted:"#5f7a99",accent:"#00e5ff",accent2:"#0088aa",hover:"#182231"},monaco:"dark-cyber"},
+  onedark:{name:"One Dark",ui:{bg:"#282c34",panel:"#21252b",panel2:"#2c313a",border:"#3a3f4b",text:"#abb2bf",muted:"#5c6370",accent:"#61afef",accent2:"#3d8bd1",hover:"#343a44"},monaco:"dark-onedark"},
+  monokai:{name:"Monokai",ui:{bg:"#272822",panel:"#1e1f1c",panel2:"#2e2f28",border:"#3e3d32",text:"#f8f8f2",muted:"#75715e",accent:"#f92672",accent2:"#c2185b",hover:"#383830"},monaco:"dark-monokai"}
+};
+
+/* ============ Languages ============ */
+const LANGS=[
+["plaintext","نص عادي","txt"],["javascript","JavaScript","js"],["typescript","TypeScript","ts"],
+["html","HTML","html"],["css","CSS","css"],["json","JSON","json"],["python","Python","py"],
+["cpp","C++","cpp"],["c","C","c"],["csharp","C#","cs"],["java","Java","java"],["php","PHP","php"],
+["go","Go","go"],["rust","Rust","rs"],["sql","SQL","sql"],["markdown","Markdown","md"],
+["shell","Shell","sh"],["yaml","YAML","yml"],["xml","XML","xml"],["ini","INI","ini"]
+];
+const TEMPLATES={
+javascript:'console.log("Hello from 𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜");\n',
+python:'# 𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜\nprint("Hello from Python")\n',
+html:'<!DOCTYPE html>\n<html lang="ar" dir="rtl">\n<head><meta charset="UTF-8"><title>DARK</title></head>\n<body><h1>مرحباً 👋</h1></body>\n</html>',
+css:'body{font-family:system-ui;background:#111;color:white}\n',
+json:'{\n  "name": "𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜"\n}\n',
+plaintext:'',typescript:'const msg: string = "Hello";\nconsole.log(msg);\n',
+cpp:'#include <iostream>\nint main(){std::cout<<"Hello";return 0;}\n',
+c:'#include <stdio.h>\nint main(){printf("Hello");return 0;}\n',
+java:'class Main { public static void main(String[] args){ System.out.println("Hello"); } }\n',
+php:'<?php\necho "Hello";\n',
+go:'package main\nimport "fmt"\nfunc main(){fmt.Println("Hello")}\n',
+rust:'fn main(){ println!("Hello"); }\n',
+sql:'SELECT * FROM users WHERE id = 1;\n',
+markdown:'# 𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜\n\nHello\n',
+shell:'#!/bin/bash\necho "Hello"\n',
+yaml:'name: DARK\nversion: "1.0"\n',
+xml:'<?xml version="1.0"?>\n<root></root>\n',
+ini:'[section]\nkey=value\n'
+};
+
+const DEFAULT_BLOCKED=[".env",".key",".pem",".p12","secrets","credentials","id_rsa","private"];
+const DEFAULT_STATE={
+  project:{
+    name:"MY BOT",
+    tree:[
+      {type:"file",name:"main.py",lang:"python",code:'# 𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜\nimport telebot\n\nbot = telebot.TeleBot("TOKEN")\n\n@bot.message_handler(commands=["start"])\ndef start(message):\n    bot.reply_to(message, "Hello!")\n\nif __name__ == "__main__":\n    bot.polling()\n'},
+      {type:"file",name:"config.py",lang:"python",code:'# config\nBOT_TOKEN = ""\n'},
+      {type:"file",name:"requirements.txt",lang:"plaintext",code:"pyTelegramBotAPI\n"},
+      {type:"folder",name:"handlers",open:false,children:[
+        {type:"file",name:"start.py",lang:"python",code:'def start(message, bot):\n    bot.reply_to(message, "hi")\n'},
+        {type:"file",name:"admin.py",lang:"python",code:'def ban(user):\n    pass\n'}
+      ]}
+    ]
+  },
+  openTabs:["main.py"],
+  activeTab:"main.py",
+  font:14,theme:"dark",autoSave:true,
+  tabSize:2,wordWrap:"on",minimap:false,brackets:"always",
+  formatOnPaste:true,
+  blockedFiles:DEFAULT_BLOCKED.slice(),
+  history:{}
+};
+let state=null;
+let editor=null,saveTimer=null,historyTimer=null;
+let cmdFilter="",cmdSelIdx=0,confirmCb=null;
+let findState={matches:[],idx:-1,regex:false};
+let storageMode="localStorage";
+let db=null;
+let currentDir="";
+let renamingTarget=null;
+
+/* ============ IDB ============ */
+function openIDB(){
+  return new Promise(res=>{
+    try{
+      const r=indexedDB.open("dark_code_db",1);
+      r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains("kv"))r.result.createObjectStore("kv")};
+      r.onsuccess=()=>{db=r.result;res(db)};
+      r.onerror=()=>res(null);
+    }catch(e){res(null)}
+  });
+}
+function idbGet(k){return new Promise(res=>{if(!db)return res(null);try{const tx=db.transaction("kv","readonly").objectStore("kv").get(k);tx.onsuccess=()=>res(tx.result);tx.onerror=()=>res(null)}catch(e){res(null)}})}
+function idbSet(k,v){return new Promise(res=>{if(!db)return res(false);try{const tx=db.transaction("kv","readwrite").objectStore("kv").put(v,k);tx.onsuccess=()=>res(true);tx.onerror=()=>res(false)}catch(e){res(false)}})}
+
+/* ============ Persistence ============ */
+async function loadState(){
+  let raw=null;
+  try{raw=localStorage.getItem("dark_code_v4")}catch(e){}
+  if(raw){try{const s=JSON.parse(raw);if(s&&s.project)return s}catch(e){}}
+  await openIDB();
+  const fromIDB=await idbGet("dark_code_v4");
+  if(fromIDB&&fromIDB.project){storageMode="indexedDB";return fromIDB}
+  return null;
+}
+async function persist(){
+  if(!state)return;
+  const json=JSON.stringify(state);
+  try{
+    if(json.length<4*1024*1024){
+      localStorage.setItem("dark_code_v4",json);
+      storageMode="localStorage";
+      return;
+    }
+  }catch(e){}
+  if(!db)await openIDB();
+  const ok=await idbSet("dark_code_v4",state);
+  if(ok){
+    storageMode="indexedDB";
+    try{localStorage.removeItem("dark_code_v4")}catch(_){}
+  }
+}
+
+/* ============ Helpers ============ */
+const $=id=>document.getElementById(id);
+const els={
+  editor:$("editor"),tabs:$("tabs"),tree:$("tree"),outlineList:$("outlineList"),
+  title:$("titleName"),dirty:$("dirty"),
+  sPos:$("sPos"),sSpaces:$("sSpaces"),sEol:$("sEol"),sLang:$("sLang"),sSize:$("sSize"),sSave:$("sSave"),
+  overlay:$("overlay"),toast:$("toast"),loader:$("loader"),
+  inputModal:$("inputModal"),inputTitle:$("inputTitle"),inputLabel:$("inputLabel"),inputField:$("inputField"),inputHint:$("inputHint"),
+  newFileModal:$("newFileModal"),newFileName:$("newFileName"),newFileLang:$("newFileLang"),newFileDir:$("newFileDir"),
+  confirmModal:$("confirmModal"),confirmTitle:$("confirmTitle"),confirmMsg:$("confirmMsg"),
+  settingsModal:$("settingsModal"),
+  projSearchModal:$("projectSearchModal"),projSearchInput:$("projSearchInput"),projResults:$("projResults"),
+  cmdCenter:$("cmdCenter"),cmdSearch:$("cmdSearch"),cmdList:$("cmdList"),
+  sheet:$("sheet"),sheetTitle:$("sheetTitle"),sheetBody:$("sheetBody"),
+  findBar:$("findBar"),findInput:$("findInput"),replaceInput:$("replaceInput"),findInfo:$("findInfo"),
+  explorer:$("explorer"),outline:$("outline"),
+  historyModal:$("historyModal"),historyBody:$("historyBody")
+};
+
+function toast(s,type=""){els.toast.textContent=s;els.toast.className=type;els.toast.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>els.toast.classList.remove("show"),1900)}
+function haptic(t="light"){
+  try{
+    if(window.navigator&&window.navigator.vibrate) window.navigator.vibrate(t==="ok"?40:t==="warn"?30:15);
+  }catch(e){}
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function fmtBytes(n){if(n<1024)return n+" B";if(n<1024*1024)return (n/1024).toFixed(1)+" KB";return (n/1024/1024).toFixed(2)+" MB"}
+function ext(id){return (LANGS.find(x=>x[0]===id)||LANGS[0])[2]}
+function langLabel(id){return (LANGS.find(x=>x[0]===id)||LANGS[0])[1]}
+function langFromName(name){
+  const e=name.split(".").pop().toLowerCase();
+  if(name.toLowerCase()==="dockerfile")return "dockerfile";
+  const m=LANGS.find(x=>x[2]===e);
+  return m?m[0]:"plaintext";
+}
+function isBlocked(name){
+  const n=String(name).toLowerCase();
+  return (state.blockedFiles||[]).some(p=>n.includes(String(p).toLowerCase()));
+}
+function iconForFile(name){
+  const e=name.split(".").pop().toLowerCase();
+  const m={py:"🐍",js:"🟨",ts:"🔷",html:"🌐",css:"🎨",json:"📋",md:"📝",txt:"📄",sh:"⚡",yml:"⚙️",yaml:"⚙️",xml:"📐",ini:"⚙️",env:"🔒",key:"🔒",pem:"🔒",lock:"🔒",zip:"📦"};
+  if(name.toLowerCase()==="dockerfile")return "🐳";
+  if(name.toLowerCase()==="requirements.txt")return "📦";
+  return m[e]||"📄";
+}
+function iconForFolder(open){return open?"📂":"📁"}
+
+function showFatal(msg){
+  els.loader.classList.remove("hidden");
+  els.loader.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:system-ui,sans-serif;direction:rtl"><div><div style="font-size:42px;margin-bottom:12px">⚠️</div><div style="font-size:15px;line-height:1.8;color:#ddd">'+escapeHtml(msg)+'</div></div></div>';
+}
+async function saveAll(){
+  saveActiveCode();await persist();
+  markDirty(false);toast("✓ تم الحفظ محلياً","ok");
+}
+
+/* ============ Tree ============ */
+function findNode(path){
+  const parts=String(path).split("/").filter(Boolean);
+  if(!parts.length)return null;
+  let cur=state.project.tree;
+  let node=null;
+  for(let i=0;i<parts.length;i++){
+    node=cur.find(n=>n.name===parts[i]);
+    if(!node)return null;
+    if(i<parts.length-1){
+      if(node.type!=="folder")return null;
+      cur=node.children||[];
+    }
+  }
+  return node;
+}
+function findParentArray(path){
+  const parts=String(path).split("/").filter(Boolean);
+  if(parts.length===1)return state.project.tree;
+  const parentPath=parts.slice(0,-1).join("/");
+  const parent=findNode(parentPath);
+  return parent&&parent.type==="folder"?(parent.children||[]):null;
+}
+function filePathOf(node){
+  function walk(arr,prefix){
+    for(const n of arr){
+      const p=prefix?prefix+"/"+n.name:n.name;
+      if(n===node)return p;
+      if(n.type==="folder"&&n.children){
+        const r=walk(n.children,p);
+        if(r)return r;
+      }
+    }
+    return null;
+  }
+  return walk(state.project.tree,"");
+}
+function allFiles(arr=state.project.tree,prefix=""){
+  const out=[];
+  for(const n of arr){
+    const p=prefix?prefix+"/"+n.name:n.name;
+    if(n.type==="file")out.push({path:p,node:n});
+    else if(n.type==="folder"&&n.children)out.push(...allFiles(n.children,p));
+  }
+  return out;
+}
+
+/* ============ Render Tree ============ */
+function renderTree(){
+  els.tree.innerHTML="";
+  renderTreeLevel(state.project.tree,els.tree,0);
+}
+function renderTreeLevel(arr,container,level){
+  arr.forEach(node=>{
+    const path=filePathOf(node);
+    const row=document.createElement("div");
+    row.className="treeItem";
+    if(node.type==="file"&&node===activeNode())row.classList.add("active");
+    row.style.paddingRight=(10+level*14)+"px";
+    row.dataset.path=path;
+    if(node.type==="folder"){
+      row.innerHTML=`<span class="caret">${node.open?"▼":"▶"}</span><span class="ico">${iconForFolder(node.open)}</span><span class="nm">${escapeHtml(node.name)}</span>`;
+      row.onclick=e=>{e.stopPropagation();node.open=!node.open;renderTree();persist()};
+      bindLongPress(row,()=>nodeMenu(node,path));
+      container.appendChild(row);
+      if(node.open&&node.children&&node.children.length){
+        const ch=document.createElement("div");
+        ch.className="treeChildren";
+        container.appendChild(ch);
+        renderTreeLevel(node.children,ch,level+1);
+      }
+    } else {
+      const blocked=isBlocked(node.name);
+      row.innerHTML=`<span class="caret"></span><span class="ico">${blocked?"🔒":iconForFile(node.name)}</span><span class="nm">${escapeHtml(node.name)}</span>`;
+      if(blocked)row.classList.add("locked");
+      row.onclick=e=>{
+        e.stopPropagation();
+        if(blocked){toast("🔒 ملف محمي","warn");haptic("warn");return}
+        openFileByPath(path);
+      };
+      bindLongPress(row,()=>nodeMenu(node,path));
+      container.appendChild(row);
+    }
+  });
+}
+function bindLongPress(el,cb){
+  let timer=null,moved=false;
+  const start=()=>{moved=false;timer=setTimeout(()=>{if(!moved)cb()},500)};
+  const end=()=>{clearTimeout(timer);timer=null};
+  el.addEventListener("touchstart",start,{passive:true});
+  el.addEventListener("touchend",end);
+  el.addEventListener("touchmove",()=>{moved=true;end()},{passive:true});
+  el.addEventListener("touchcancel",end);
+  el.addEventListener("contextmenu",e=>{e.preventDefault();cb()});
+}
+
+/* ============ Node menu ============ */
+function nodeMenu(node,path){
+  haptic();
+  const items=[];
+  if(node.type==="file"){
+    items.push(["📂 فتح",()=>{if(isBlocked(node.name)){toast("🔒 ملف محمي","warn");return}openFileByPath(path)}]);
+    items.push(["✏️ إعادة تسمية",()=>renameNode(node)]);
+    items.push(["📋 نسخ المسار",()=>{if(navigator.clipboard)navigator.clipboard.writeText(path);toast("✓ تم النسخ")}]);
+    items.push(["🗑 حذف",()=>deleteNode(node,path,false)]);
+  } else {
+    items.push([(node.open?"📁 طي":"📁 فتح"),()=>{node.open=!node.open;renderTree();persist()}]);
+    items.push(["＋ ملف داخل المجلد",()=>{currentDir=path;createFileInDir(path)}]);
+    items.push(["✏️ إعادة تسمية",()=>renameNode(node)]);
+    items.push(["🗑 حذف المجلد",()=>deleteNode(node,path,true)]);
+  }
+  showSheet((node.type==="folder"?"📁 ":"📄 ")+node.name,items);
+}
+
+/* ============ File operations ============ */
+function activeNode(){
+  if(!state||!state.activeTab)return null;
+  return findNode(state.activeTab);
+}
+function openFileByPath(path){
+  if(isBlocked(path.split("/").pop())){toast("🔒 ملف محمي","warn");haptic("warn");return}
+  const node=findNode(path);
+  if(!node||node.type!=="file")return;
+  saveActiveCode();
+  if(!state.openTabs.includes(path))state.openTabs.push(path);
+  state.activeTab=path;
+  loadActiveIntoEditor();
+  renderTabs();
+  renderTree();
+  persist();
+  haptic();
+  if(window.innerWidth<900)closeDrawers();
+}
+function saveActiveCode(){
+  if(!editor||!state||!state.activeTab)return;
+  const node=findNode(state.activeTab);
+  if(node&&node.type==="file")node.code=editor.getValue();
+}
+function loadActiveIntoEditor(){
+  const node=activeNode();
+  if(!node||!editor)return;
+  editor.setValue(node.code||"");
+  monaco.editor.setModelLanguage(editor.getModel(),node.lang);
+  els.title.textContent=node.name;
+  els.sLang.textContent=langLabel(node.lang);
+  updateSize();
+  markDirty(false);
+  buildOutline();
+}
+function closeTab(path){
+  const node=findNode(path);
+  const isDirty=editor&&state.activeTab===path&&node&&editor.getValue()!==node.code;
+  const proceed=()=>{
+    saveActiveCode();
+    state.openTabs=state.openTabs.filter(p=>p!==path);
+    if(state.activeTab===path){
+      state.activeTab=state.openTabs[state.openTabs.length-1]||null;
+      if(state.activeTab)loadActiveIntoEditor();
+      else if(editor){editor.setValue("");els.title.textContent="𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜";buildOutline()}
+    }
+    renderTabs();renderTree();persist();
+  };
+  if(isDirty)askConfirm("إغلاق بدون حفظ؟","الملف "+(node?node.name:"")+" فيه تعديلات غير محفوظة.","إغلاق",proceed);
+  else proceed();
+}
+function markDirty(v){
+  els.dirty.textContent=v?" ●":"";
+  els.sSave.textContent=v?"●":"✓";
+  els.sSave.style.color=v?"var(--accent)":"var(--muted)";
+  document.querySelectorAll(".tab").forEach(t=>{
+    if(t.dataset.path===state.activeTab)t.classList.toggle("dirty",v);
+  });
+}
+
+/* ============ Tabs ============ */
+function renderTabs(){
+  els.tabs.innerHTML="";
+  state.openTabs.forEach(path=>{
+    const node=findNode(path);
+    if(!node)return;
+    const t=document.createElement("div");
+    t.className="tab"+(state.activeTab===path?" active":"");
+    t.dataset.path=path;
+    t.innerHTML=`<span class="name">${escapeHtml(node.name)}</span><span class="x">×</span>`;
+    t.onclick=e=>{
+      if(e.target.classList.contains("x")){closeTab(path);return}
+      if(state.activeTab!==path){
+        saveActiveCode();
+        state.activeTab=path;
+        loadActiveIntoEditor();
+        renderTabs();renderTree();persist();
+      }
+    };
+    els.tabs.appendChild(t);
+  });
+  const at=els.tabs.querySelector(".tab.active");
+  if(at)at.scrollIntoView({inline:"center",block:"nearest"});
+}
+
+/* ============ Create / Rename / Delete ============ */
+function createFileInDir(dir){
+  currentDir=dir||"";
+  els.newFileDir.textContent="/"+currentDir;
+  els.newFileName.value="";
+  els.newFileLang.value="python";
+  els.newFileModal.classList.add("show");
+  setTimeout(()=>els.newFileName.focus(),80);
+}
+function confirmNewFile(){
+  let name=els.newFileName.value.trim();
+  if(!name){toast("اكتب اسم الملف","warn");return}
+  if(isBlocked(name)){toast("🔒 اسم محظور","err");return}
+  let lang=els.newFileLang.value;
+  if(!name.includes("."))name+="."+ext(lang);
+  const target=currentDir?(function(){const p=findNode(currentDir);return p&&p.type==="folder"?(p.children||[]):state.project.tree})():state.project.tree;
+  if(target.some(n=>n.name===name)){toast("الاسم مستخدم","err");return}
+  const node={type:"file",name,lang,code:TEMPLATES[lang]||""};
+  target.push(node);
+  els.newFileModal.classList.remove("show");
+  const path=filePathOf(node);
+  if(path)openFileByPath(path);
+  renderTree();persist();
+  toast("✓ تم الإنشاء","ok");haptic("ok");
+}
+function createFolder(){
+  promptInput("📁 مجلد جديد","اسم المجلد","","",(val)=>{
+    const name=val.trim();
+    if(!name)return;
+    if(state.project.tree.some(n=>n.name===name)){toast("الاسم مستخدم","err");return}
+    state.project.tree.push({type:"folder",name,open:true,children:[]});
+    renderTree();persist();toast("✓ تم الإنشاء","ok");haptic("ok");
+  });
+}
+function renameNode(node){
+  renamingTarget=node;
+  promptInput("✏️ إعادة تسمية","الاسم الجديد",node.name,"",(val)=>{
+    const n=val.trim();
+    if(!n){toast("اكتب اسمًا","warn");return}
+    if(isBlocked(n)){toast("🔒 اسم محظور","err");return}
+    const oldPath=filePathOf(node);
+    const parentArr=findParentArray(oldPath);
+    if(parentArr&&parentArr.some(x=>x!==node&&x.name===n)){toast("الاسم مستخدم","err");return}
+    node.name=n;
+    if(node.type==="file"&&n.includes("."))node.lang=langFromName(n);
+    const newPath=filePathOf(node);
+    if(node.type==="file"){
+      if(state.openTabs.includes(oldPath)){
+        state.openTabs=state.openTabs.map(p=>p===oldPath?newPath:p);
+        if(state.activeTab===oldPath)state.activeTab=newPath;
+      }
+    } else if(node.type==="folder"){
+      const oldPrefix=oldPath+"/";
+      const newPrefix=newPath+"/";
+      state.openTabs=state.openTabs.map(p=>p.startsWith(oldPrefix)?newPrefix+p.slice(oldPrefix.length):p);
+      if(state.activeTab&&state.activeTab.startsWith(oldPrefix)){
+        state.activeTab=newPrefix+state.activeTab.slice(oldPrefix.length);
+      }
+    }
+    renderTree();renderTabs();
+    if(node===activeNode()){
+      els.title.textContent=node.name;
+      if(editor)monaco.editor.setModelLanguage(editor.getModel(),node.lang);
+      els.sLang.textContent=langLabel(node.lang);
+    }
+    persist();toast("✓ تم التعديل","ok");haptic("ok");
+    renamingTarget=null;
+  });
+}
+function deleteNode(node,path,isFolder){
+  const msg=isFolder?"سيتم حذف المجلد وكل محتوياته.":"سيتم حذف الملف.";
+  askConfirm("تأكيد الحذف",msg+" ("+node.name+")","حذف",()=>{
+    const arr=findParentArray(path);
+    if(arr){const i=arr.indexOf(node);if(i>=0)arr.splice(i,1)}
+    const prefix=path+"/";
+    state.openTabs=state.openTabs.filter(p=>p!==path&&!p.startsWith(prefix));
+    if(state.activeTab&&(state.activeTab===path||state.activeTab.startsWith(prefix))){
+      state.activeTab=state.openTabs[state.openTabs.length-1]||null;
+      if(state.activeTab)loadActiveIntoEditor();
+      else if(editor){editor.setValue("");els.title.textContent="𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜";buildOutline()}
+    }
+    renderTree();renderTabs();persist();
+    toast("🗑 تم الحذف","ok");haptic("ok");
+  });
+}
+
+/* ============ Outline ============ */
+function buildOutline(){
+  const list=els.outlineList;list.innerHTML="";
+  if(!editor||!editor.getModel())return;
+  const code=editor.getValue();
+  const lang=editor.getModel().getLanguageId();
+  const items=[];
+  if(lang==="python"){
+    const rx=/^(\s*)(def|class)\s+([A-Za-z_]\w*)/gm;
+    let m;
+    while((m=rx.exec(code))){
+      const indent=m[1].length;
+      const level=indent===0?1:indent<=4?2:3;
+      items.push({label:(m[2]==="class"?"class ":"ƒ ")+m[3],line:code.substr(0,m.index).split("\n").length,level,icon:m[2]==="class"?"◈":"ƒ"});
+    }
+  } else if(lang==="javascript"||lang==="typescript"){
+    const rx=/^\s*(?:export\s+)?(?:async\s+)?(function\s+([A-Za-z_$][\w$]*)|class\s+([A-Za-z_$][\w$]*)|const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(|let\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(|var\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\()/gm;
+    let m;
+    while((m=rx.exec(code))){
+      const name=m[2]||m[3]||m[4]||m[5]||m[6];
+      const isClass=!!m[3];
+      items.push({label:(isClass?"class ":"ƒ ")+name,line:code.substr(0,m.index).split("\n").length,level:1,icon:isClass?"◈":"ƒ"});
+    }
+  } else if(lang==="markdown"){
+    const rx=/^(#{1,6})\s+(.+)$/gm;
+    let m;
+    while((m=rx.exec(code)))items.push({label:m[2],line:code.substr(0,m.index).split("\n").length,level:m[1].length,icon:"#"});
+  }
+  if(!items.length){
+    list.innerHTML='<div class="outlineEmpty">لا يوجد محتوى</div>';
+    return;
+  }
+  items.forEach(it=>{
+    const d=document.createElement("div");
+    d.className="outItem level"+it.level;
+    d.innerHTML=`<span class="oico">${it.icon}</span>${escapeHtml(it.label)}`;
+    d.onclick=()=>{
+      editor.revealLineInCenter(it.line);
+      editor.setPosition({lineNumber:it.line,column:1});
+      editor.focus();
+      if(window.innerWidth<900)closeDrawers();
+    };
+    list.appendChild(d);
+  });
+}
+
+/* ============ Find & Replace ============ */
+function openFind(){
+  els.findBar.classList.add("show");
+  els.findInput.focus();
+  els.findInput.select();
+}
+function closeFind(){
+  els.findBar.classList.remove("show");
+  findState={matches:[],idx:-1,regex:false};
+  $("findRegex").classList.remove("active");
+  if(editor)editor.focus();
+}
+function runFind(){
+  if(!editor||!editor.getModel())return;
+  const q=els.findInput.value;
+  const model=editor.getModel();
+  if(!q){els.findInfo.textContent="0/0";findState.matches=[];return}
+  let matches=[];
+  try{
+    matches=model.findMatches(q,false,findState.regex,false,null,false);
+  }catch(e){
+    els.findInfo.textContent="Err";findState.matches=[];return;
+  }
+  findState.matches=matches;
+  if(!matches.length){els.findInfo.textContent="0/0";return}
+  const pos=editor.getPosition();
+  const offset=model.getOffsetAt(pos);
+  let idx=matches.findIndex(m=>model.getOffsetAt(m.range.getStartPosition())>=offset);
+  if(idx<0)idx=0;
+  findState.idx=idx;
+  gotoMatch(idx);
+}
+function gotoMatch(idx){
+  const m=findState.matches[idx];
+  if(!m)return;
+  editor.revealRangeInCenter(m.range);
+  editor.setSelection(m.range);
+  els.findInfo.textContent=(idx+1)+"/"+findState.matches.length;
+}
+function findNext(){if(!findState.matches.length)return runFind();findState.idx=(findState.idx+1)%findState.matches.length;gotoMatch(findState.idx)}
+function findPrev(){if(!findState.matches.length)return runFind();findState.idx=(findState.idx-1+findState.matches.length)%findState.matches.length;gotoMatch(findState.idx)}
+function replaceOne(){
+  if(!findState.matches.length)return;
+  const m=findState.matches[findState.idx];
+  if(!m)return;
+  editor.executeEdits("replace",[{range:m.range,text:els.replaceInput.value}]);
+  runFind();
+}
+function replaceAll(){
+  if(!editor||!editor.getModel())return;
+  const q=els.findInput.value;
+  if(!q)return;
+  const model=editor.getModel();
+  let matches=[];
+  try{
+    matches=model.findMatches(q,false,findState.regex,false,null,false);
+  }catch(e){toast("Regex غير صحيح","err");return}
+  if(!matches.length){toast("لا نتائج","warn");return}
+  editor.executeEdits("replaceAll",matches.map(m=>({range:m.range,text:els.replaceInput.value})));
+  toast("✓ تم استبدال "+matches.length,"ok");
+  haptic("ok");
+  runFind();
+}
+
+/* ============ Project search ============ */
+function openProjectSearch(){
+  els.projSearchModal.classList.add("show");
+  els.projSearchInput.value="";
+  els.projResults.innerHTML="";
+  setTimeout(()=>els.projSearchInput.focus(),80);
+}
+function runProjectSearch(){
+  const q=els.projSearchInput.value.trim();
+  const box=els.projResults;
+  box.innerHTML="";
+  if(!q)return;
+  const useRegex=$("projSearchRegex").checked;
+  const caseSens=$("projSearchCase").checked;
+  let rx;
+  try{
+    rx=useRegex?new RegExp(q,caseSens?"g":"gi"):new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),caseSens?"g":"gi");
+  }catch(e){box.innerHTML='<div style="padding:16px;color:var(--danger);font-size:12px">Regex غير صحيح</div>';return}
+  const files=allFiles();
+  let total=0;
+  files.forEach(({path,node})=>{
+    const lines=(node.code||"").split("\n");
+    const hits=[];
+    lines.forEach((line,i)=>{rx.lastIndex=0;if(rx.test(line))hits.push({line:i+1,text:line})});
+    if(hits.length){
+      total+=hits.length;
+      const fh=document.createElement("div");
+      fh.className="srFile";fh.textContent="📄 "+path;
+      box.appendChild(fh);
+      hits.slice(0,20).forEach(h=>{
+        const r=document.createElement("div");
+        r.className="srItem";
+        const pat=useRegex?q:q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+        const text=escapeHtml(h.text).replace(new RegExp(pat,caseSens?"g":"gi"),m=>"<mark>"+m+"</mark>");
+        r.innerHTML=`<span class="srLine">${h.line}</span><span class="srText">${text}</span>`;
+        r.onclick=()=>{
+          els.projSearchModal.classList.remove("show");
+          openFileByPath(path);
+          setTimeout(()=>{
+            if(editor){
+              editor.revealLineInCenter(h.line);
+              editor.setPosition({lineNumber:h.line,column:1});
+              editor.focus();
+            }
+          },150);
+        };
+        box.appendChild(r);
+      });
+      if(hits.length>20){
+        const more=document.createElement("div");
+        more.className="srItem";
+        more.style.color="var(--muted)";
+        more.textContent="+"+(hits.length-20)+" نتيجة أخرى";
+        box.appendChild(more);
+      }
+    }
+  });
+  if(!total)box.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">لا نتائج</div>';
+}
+
+/* ============ Settings ============ */
+function openSettings(){
+  $("setTheme").innerHTML=Object.keys(THEMES).map(k=>`<option value="${k}">${THEMES[k].name}</option>`).join("");
+  $("setTheme").value=state.theme;
+  $("setFont").value=state.font;
+  $("setTab").value=String(state.tabSize);
+  $("setWrap").value=state.wordWrap;
+  $("setMinimap").value=state.minimap?"1":"0";
+  $("setBrackets").value=state.brackets;
+  $("setFormatPaste").value=state.formatOnPaste?"1":"0";
+  $("setAutoSave").value=state.autoSave?"1":"0";
+  $("setBlocked").value=(state.blockedFiles||[]).join("\n");
+  els.settingsModal.classList.add("show");
+}
+function saveSettings(){
+  state.theme=$("setTheme").value;
+  state.font=Math.max(9,Math.min(32,parseInt($("setFont").value,10)||14));
+  state.tabSize=parseInt($("setTab").value,10)||2;
+  state.wordWrap=$("setWrap").value;
+  state.minimap=$("setMinimap").value==="1";
+  state.brackets=$("setBrackets").value;
+  state.formatOnPaste=$("setFormatPaste").value==="1";
+  state.autoSave=$("setAutoSave").value==="1";
+  state.blockedFiles=$("setBlocked").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  applyTheme();
+  applyEditorOptions();
+  renderTree();
+  els.settingsModal.classList.remove("show");
+  persist();
+  toast("✓ تم الحفظ","ok");
+}
+function applyEditorOptions(){
+  if(!editor)return;
+  editor.updateOptions({
+    fontSize:state.font,
+    tabSize:state.tabSize,
+    wordWrap:state.wordWrap,
+    minimap:{enabled:!!state.minimap},
+    autoClosingBrackets:state.brackets,
+    formatOnPaste:!!state.formatOnPaste
+  });
+  if(editor.getModel())editor.getModel().updateOptions({tabSize:state.tabSize,insertSpaces:true});
+  els.sSpaces.textContent="Spaces: "+state.tabSize;
+}
+
+/* ============ Modal helpers ============ */
+function promptInput(title,label,defaultVal,hint,cb){
+  els.inputTitle.textContent=title;
+  els.inputLabel.textContent=label;
+  els.inputField.value=defaultVal||"";
+  els.inputHint.textContent=hint||"";
+  els.inputModal.classList.add("show");
+  els.inputModal._cb=cb;
+  setTimeout(()=>{els.inputField.focus();els.inputField.select()},80);
+}
+$("inputCancel").onclick=()=>els.inputModal.classList.remove("show");
+$("inputOk").onclick=()=>{
+  const cb=els.inputModal._cb;const val=els.inputField.value;
+  els.inputModal.classList.remove("show");
+  cb&&cb(val);
+};
+els.inputField.addEventListener("keydown",e=>{if(e.key==="Enter")$("inputOk").click()});
+
+function askConfirm(title,msg,yes,cb){
+  els.confirmTitle.textContent=title;
+  els.confirmMsg.textContent=msg;
+  $("confirmYes").textContent=yes||"تأكيد";
+  confirmCb=cb;
+  els.confirmModal.classList.add("show");
+}
+$("confirmYes").onclick=()=>{els.confirmModal.classList.remove("show");const c=confirmCb;confirmCb=null;c&&c()};
+$("confirmNo").onclick=()=>{els.confirmModal.classList.remove("show");confirmCb=null};
+
+/* ============ Sheet ============ */
+function showSheet(title,items){
+  els.sheetTitle.textContent=title;
+  els.sheetBody.innerHTML="";
+  items.forEach(([label,fn])=>{
+    const r=document.createElement("div");
+    r.className="sheetItem"+(label.includes("🗑")||label.includes("حذف")?" danger":"");
+    r.innerHTML=`<span>${label}</span>`;
+    r.onclick=()=>{closeSheet();setTimeout(fn,80)};
+    els.sheetBody.appendChild(r);
+  });
+  els.sheet.classList.add("show");
+  els.overlay.classList.add("show");
+}
+function closeSheet(){els.sheet.classList.remove("show");syncOverlay()}
+
+/* ============ Drawers ============ */
+function openDrawer(which){
+  if(which==="explorer"){els.explorer.classList.add("open");renderTree()}
+  else if(which==="outline"){els.outline.classList.add("open");buildOutline()}
+  els.overlay.classList.add("show");
+}
+function closeDrawers(){
+  els.explorer.classList.remove("open");
+  els.outline.classList.remove("open");
+  syncOverlay();
+}
+function syncOverlay(){
+  const anyOpen=els.sheet.classList.contains("show")||
+                els.explorer.classList.contains("open")||
+                els.outline.classList.contains("open")||
+                els.cmdCenter.classList.contains("show");
+  if(anyOpen)els.overlay.classList.add("show");
+  else els.overlay.classList.remove("show");
+}
+
+/* ============ Command Center ============ */
+const COMMANDS=[
+  {group:"ملف",items:[
+    {icon:"📄",label:"ملف جديد",key:"",fn:()=>createFileInDir("")},
+    {icon:"📁",label:"مجلد جديد",key:"",fn:()=>createFolder()},
+    {icon:"📥",label:"استيراد ملف / ZIP",key:"",fn:()=>importFiles()},
+    {icon:"📦",label:"تصدير ZIP",key:"",fn:()=>exportZip()},
+    {icon:"💾",label:"حفظ الكل",key:"Ctrl+S",fn:()=>saveAll()},
+  ]},
+  {group:"تحرير",items:[
+    {icon:"🔍",label:"بحث في الملف",key:"Ctrl+F",fn:()=>openFind()},
+    {icon:"🔎",label:"بحث في المشروع",key:"Ctrl+Shift+F",fn:()=>openProjectSearch()},
+    {icon:"✨",label:"تنسيق",key:"",fn:()=>formatSimple()},
+    {icon:"📋",label:"نسخ الكود",key:"",fn:()=>copyCode()},
+    {icon:"↪",label:"اذهب إلى سطر",key:"Ctrl+G",fn:()=>gotoLine()},
+  ]},
+  {group:"عرض",items:[
+    {icon:"📁",label:"Explorer",key:"Ctrl+B",fn:()=>openDrawer("explorer")},
+    {icon:"📋",label:"Outline",key:"",fn:()=>openDrawer("outline")},
+    {icon:"🎨",label:"تغيير الثيم",key:"",fn:()=>openThemeSheet()},
+    {icon:"A＋",label:"تكبير الخط",key:"",fn:()=>{state.font=Math.min(32,state.font+1);applyEditorOptions();persist()}},
+    {icon:"A−",label:"تصغير الخط",key:"",fn:()=>{state.font=Math.max(9,state.font-1);applyEditorOptions();persist()}},
+  ]},
+  {group:"إدارة",items:[
+    {icon:"⚙️",label:"الإعدادات",key:"",fn:()=>openSettings()},
+    {icon:"🕘",label:"السجل المحلي",key:"",fn:()=>openHistory()},
+    {icon:"✕",label:"إغلاق التبويب",key:"Ctrl+W",fn:()=>state.activeTab&&closeTab(state.activeTab)},
+    {icon:"⬇️",label:"تنزيل الملف الحالي",key:"",fn:()=>download()},
+    {icon:"🗑",label:"مسح كل البيانات",key:"",fn:()=>askConfirm("مسح البيانات؟","سيتم حذف المشروع والإعدادات.","مسح",async()=>{
+      try{localStorage.removeItem("dark_code_v4")}catch(e){}
+      if(db)await idbSet("dark_code_v4",null);
+      location.reload();
+    })},
+  ]}
+];
+function openCmd(){
+  els.cmdCenter.classList.add("show");
+  els.cmdSearch.value="";cmdFilter="";cmdSelIdx=0;
+  renderCmd();syncOverlay();
+  setTimeout(()=>els.cmdSearch.focus(),80);
+}
+function closeCmd(){els.cmdCenter.classList.remove("show");syncOverlay()}
+function renderCmd(){
+  const list=els.cmdList;list.innerHTML="";
+  const q=cmdFilter.toLowerCase().trim();
+  let idx=0;
+  COMMANDS.forEach(g=>{
+    const items=g.items.filter(it=>!q||it.label.toLowerCase().includes(q));
+    if(!items.length)return;
+    const gh=document.createElement("div");gh.className="cmdGroup";gh.textContent=g.group;
+    list.appendChild(gh);
+    items.forEach(it=>{
+      const realIdx=idx++;
+      const row=document.createElement("div");
+      row.className="cmdItem"+(realIdx===cmdSelIdx?" sel":"");
+      row.innerHTML=`<span class="num">${realIdx+1}</span><span>${it.icon}</span><span>${escapeHtml(it.label)}</span>${it.key?`<span class="key">${it.key}</span>`:""}`;
+      row.onclick=()=>{closeCmd();setTimeout(it.fn,80)};
+      list.appendChild(row);
+    });
+  });
+  if(!idx)list.innerHTML='<div class="cmdEmpty">لا نتائج</div>';
+}
+function visibleCmdItems(){return els.cmdList.querySelectorAll(".cmdItem")}
+function openThemeSheet(){
+  showSheet("🎨 الثيم",Object.keys(THEMES).map(k=>["◉ "+THEMES[k].name,()=>{changeTheme(k)}]));
+}
+function gotoLine(){
+  if(!editor)return;
+  promptInput("↪ اذهب إلى سطر","رقم السطر","1","",(v)=>{
+    const n=parseInt(v,10);
+    if(isNaN(n)||n<1)return toast("رقم غير صحيح","err");
+    editor.revealLineInCenter(n);
+    editor.setPosition({lineNumber:n,column:1});
+    editor.focus();
+  });
+}
+
+/* ============ Themes ============ */
+function applyTheme(){
+  const t=THEMES[state.theme]||THEMES.dark;
+  const r=document.documentElement.style;
+  Object.keys(t.ui).forEach(k=>r.setProperty("--"+k,t.ui[k]));
+  if(editor&&window.monaco)monaco.editor.setTheme(t.monaco);
+}
+function changeTheme(name){
+  if(!THEMES[name])return;
+  state.theme=name;
+  applyTheme();persist();
+  toast("🎨 "+THEMES[name].name,"ok");
+}
+function defineMonacoThemes(){
+  const base={base:"vs-dark",inherit:true,rules:[],colors:{}};
+  monaco.editor.defineTheme("dark-midnight",{...base,colors:{"editor.background":"#080d18","editor.foreground":"#d6e4ff","editorLineNumber.foreground":"#3d5170","editorLineNumber.activeForeground":"#4f8cff","editor.selectionBackground":"#1f3a66","editorCursor.foreground":"#4f8cff","editor.lineHighlightBackground":"#0d1420"}});
+  monaco.editor.defineTheme("dark-dracula",{...base,colors:{"editor.background":"#282a36","editor.foreground":"#f8f8f2","editorLineNumber.foreground":"#6272a4","editorLineNumber.activeForeground":"#bd93f9","editor.selectionBackground":"#44475a","editorCursor.foreground":"#f8f8f0","editor.lineHighlightBackground":"#21222c"}});
+  monaco.editor.defineTheme("dark-cyber",{...base,colors:{"editor.background":"#0a0e14","editor.foreground":"#c8d6e5","editorLineNumber.foreground":"#2a3f5a","editorLineNumber.activeForeground":"#00e5ff","editor.selectionBackground":"#004d66","editorCursor.foreground":"#00e5ff","editor.lineHighlightBackground":"#0f141d"}});
+  monaco.editor.defineTheme("dark-onedark",{...base,colors:{"editor.background":"#282c34","editor.foreground":"#abb2bf","editorLineNumber.foreground":"#4b5263","editorLineNumber.activeForeground":"#61afef","editor.selectionBackground":"#3e4451","editorCursor.foreground":"#528bff","editor.lineHighlightBackground":"#2c313a"}});
+  monaco.editor.defineTheme("dark-monokai",{...base,colors:{"editor.background":"#272822","editor.foreground":"#f8f8f2","editorLineNumber.foreground":"#75715e","editorLineNumber.activeForeground":"#f92672","editor.selectionBackground":"#49483e","editorCursor.foreground":"#f8f8f0","editor.lineHighlightBackground":"#2e2f28"}});
+}
+
+/* ============ Tools ============ */
+function copyCode(){
+  if(!editor)return;
+  const txt=editor.getValue();
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast("✓ تم النسخ","ok")).catch(()=>fbCopy(txt));
+  } else fbCopy(txt);
+}
+function fbCopy(txt){
+  try{
+    const ta=document.createElement("textarea");
+    ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+    document.body.appendChild(ta);ta.select();
+    document.execCommand("copy");document.body.removeChild(ta);
+    toast("✓ تم النسخ","ok");
+  }catch(e){toast("تعذر النسخ","err")}
+}
+function download(){
+  const node=activeNode();if(!node||!editor)return;
+  const blob=new Blob([editor.getValue()],{type:"text/plain;charset=utf-8"});
+  const u=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=u;a.download=node.name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),1000);
+  toast("✓ تم التنزيل","ok");
+}
+function formatSimple(){
+  if(!editor)return;
+  const node=activeNode();if(!node)return;
+  if(node.lang==="json"){
+    try{editor.setValue(JSON.stringify(JSON.parse(editor.getValue()),null,2));toast("✓ تم التنسيق","ok")}
+    catch(e){toast("JSON غير صحيح","err")}
+  } else {
+    try{
+      const lines=editor.getValue().split("\n");
+      let indent=0;const out=[];
+      lines.forEach(l=>{
+        const t=l.trim();
+        if(t.startsWith("}")||t.startsWith("]"))indent=Math.max(0,indent-1);
+        out.push("  ".repeat(indent)+t);
+        if(t.endsWith("{")||t.endsWith("["))indent++;
+      });
+      editor.setValue(out.join("\n"));
+      toast("✓ تنسيق مبسّط","ok");
+    }catch(e){toast("تعذر التنسيق","err")}
+  }
+}
+
+/* ============ Import ============ */
+function importFiles(){
+  const input=document.createElement("input");
+  input.type="file";
+  input.multiple=true;
+  input.onchange=async e=>{
+    const files=Array.from(e.target.files||[]);
+    if(!files.length)return;
+    for(const f of files){
+      if(f.name.toLowerCase().endsWith(".zip"))await importZip(f);
+      else await importSingle(f);
+    }
+    renderTree();persist();
+    toast("✓ تم الاستيراد","ok");
+  };
+  input.click();
+}
+function importSingle(file){
+  return new Promise(res=>{
+    if(isBlocked(file.name)){toast("🔒 "+file.name+" محظور","warn");return res()}
+    const r=new FileReader();
+    r.onload=()=>{
+      const name=file.name;
+      const lang=langFromName(name);
+      const node={type:"file",name,lang,code:r.result};
+      const target=state.project.tree;
+      const i=target.findIndex(n=>n.name===name&&n.type==="file");
+      if(i>=0)target[i]=node; else target.push(node);
+      res();
+    };
+    r.onerror=()=>res();
+    r.readAsText(file);
+  });
+}
+async function importZip(file){
+  if(typeof JSZip==="undefined")return;
+  try{
+    const zip=await JSZip.loadAsync(file);
+    const paths=Object.keys(zip.files).filter(p=>!zip.files[p].dir);
+    let root="";
+    if(paths.length&&paths.every(p=>p.includes("/"))){
+      const first=paths[0].split("/")[0];
+      if(paths.every(p=>p.startsWith(first+"/")))root=first+"/";
+    }
+    for(const p of paths){
+      let rel=p.startsWith(root)?p.slice(root.length):p;
+      if(!rel)continue;
+      const parts=rel.split("/");
+      let cur=state.project.tree;
+      for(let i=0;i<parts.length-1;i++){
+        let folder=cur.find(n=>n.type==="folder"&&n.name===parts[i]);
+        if(!folder){folder={type:"folder",name:parts[i],open:false,children:[]};cur.push(folder)}
+        cur=folder.children;
+      }
+      const fname=parts[parts.length-1];
+      if(isBlocked(fname)){toast("🔒 تم تجاهل "+fname,"warn");continue}
+      const content=await zip.files[p].async("string");
+      const lang=langFromName(fname);
+      const i=cur.findIndex(n=>n.name===fname&&n.type==="file");
+      const node={type:"file",name:fname,lang,code:content};
+      if(i>=0)cur[i]=node; else cur.push(node);
+    }
+  }catch(e){toast("تعذر قراءة ZIP","err")}
+}
+
+/* ============ ZIP Export ============ */
+async function exportZip(){
+  if(typeof JSZip==="undefined"){toast("JSZip غير محمّل","err");return}
+  saveActiveCode();
+  const zip=new JSZip();
+  function walk(arr,path){
+    arr.forEach(n=>{
+      const p=path?path+"/"+n.name:n.name;
+      if(n.type==="folder")walk(n.children||[],p);
+      else zip.file(p,n.code||"");
+    });
+  }
+  walk(state.project.tree,state.project.name||"project");
+  try{
+    const blob=await zip.generateAsync({type:"blob"});
+    const u=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=u;a.download=(state.project.name||"project")+".zip";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(u),1500);
+    toast("📦 تم التصدير","ok");haptic("ok");
+  }catch(e){toast("تعذر التصدير","err")}
+}
+
+/* ============ History ============ */
+function pushHistory(){
+  if(!state)return;
+  const path=state.activeTab;
+  if(!path||!editor)return;
+  const node=findNode(path);if(!node)return;
+  const code=editor.getValue();
+  if(!state.history[path])state.history[path]=[];
+  const arr=state.history[path];
+  if(arr.length&&arr[0].code===code)return;
+  arr.unshift({ts:Date.now(),code});
+  if(arr.length>10)arr.length=10;
+}
+function openHistory(){
+  const path=state.activeTab;
+  if(!path){toast("لا ملف مفتوح","warn");return}
+  const node=findNode(path);
+  const arr=state.history[path]||[];
+  const box=els.historyBody;
+  box.innerHTML="";
+  const h=document.createElement("div");
+  h.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📄 ${escapeHtml(node?node.name:"")}</div>`;
+  box.appendChild(h);
+  if(!arr.length){
+    const d=document.createElement("div");
+    d.style.cssText="padding:16px;text-align:center;color:var(--muted);font-size:12px";
+    d.textContent="لا توجد نسخ سابقة";
+    box.appendChild(d);
+  } else {
+    arr.forEach((item,i)=>{
+      const d=new Date(item.ts);
+      const t=d.getHours().toString().padStart(2,"0")+":"+d.getMinutes().toString().padStart(2,"0");
+      const row=document.createElement("div");
+      row.className="sheetItem";
+      row.innerHTML=`<span class="ico">↩</span><span>${t} — ${i===0?"آخر نسخة":"نسخة"}</span>`;
+      row.onclick=()=>{
+        els.historyModal.classList.remove("show");
+        askConfirm("استرجاع نسخة؟","سيتم استبدال محتوى الملف الحالي.","استرجاع",()=>{
+          if(editor)editor.setValue(item.code);
+          toast("✓ تم الاسترجاع","ok");
+        });
+      };
+      box.appendChild(row);
+    });
+  }
+  els.historyModal.classList.add("show");
+}
+$("historyClose").onclick=()=>els.historyModal.classList.remove("show");
+
+/* ============ Status Bar ============ */
+function updateSize(){
+  if(!editor)return;
+  const bytes=new Blob([editor.getValue()]).size;
+  els.sSize.textContent=fmtBytes(bytes);
+}
+function updateCursor(){
+  if(!editor)return;
+  const p=editor.getPosition();
+  if(!p)return;
+  els.sPos.textContent="Ln "+p.lineNumber+", Col "+p.column;
+}
+
+/* ============ Keyboard ============ */
+document.addEventListener("keydown",e=>{
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&(e.key==="s"||e.key==="S")){e.preventDefault();saveAll();return}
+  if(ctrl&&e.shiftKey&&(e.key==="p"||e.key==="P")){e.preventDefault();openCmd();return}
+  if(ctrl&&(e.key==="k"||e.key==="K")){e.preventDefault();openCmd();return}
+  if(ctrl&&(e.key==="f"||e.key==="F")&&!e.shiftKey){e.preventDefault();openFind();return}
+  if(ctrl&&e.shiftKey&&(e.key==="f"||e.key==="F")){e.preventDefault();openProjectSearch();return}
+  if(ctrl&&(e.key==="h"||e.key==="H")){e.preventDefault();openFind();setTimeout(()=>els.replaceInput.focus(),80);return}
+  if(ctrl&&e.key==="Tab"){
+    e.preventDefault();
+    if(!state||!state.openTabs.length)return;
+    const i=state.openTabs.indexOf(state.activeTab);
+    const next=(i+(e.shiftKey?-1:1)+state.openTabs.length)%state.openTabs.length;
+    saveActiveCode();
+    state.activeTab=state.openTabs[next];
+    loadActiveIntoEditor();renderTabs();renderTree();persist();
+    return;
+  }
+  if(ctrl&&(e.key==="w"||e.key==="W")){e.preventDefault();state&&state.activeTab&&closeTab(state.activeTab);return}
+  if(ctrl&&(e.key==="n"||e.key==="N")){e.preventDefault();createFileInDir("");return}
+  if(ctrl&&(e.key==="g"||e.key==="G")){e.preventDefault();gotoLine();return}
+  if(ctrl&&(e.key==="b"||e.key==="B")){e.preventDefault();openDrawer("explorer");return}
+
+  if(els.cmdCenter.classList.contains("show")){
+    if(e.key==="Escape"){e.preventDefault();closeCmd();return}
+    const items=visibleCmdItems();
+    if(e.key==="ArrowDown"){e.preventDefault();cmdSelIdx++;if(cmdSelIdx>=items.length)cmdSelIdx=0;renderCmd();return}
+    if(e.key==="ArrowUp"){e.preventDefault();cmdSelIdx--;if(cmdSelIdx<0)cmdSelIdx=items.length-1;renderCmd();return}
+    if(e.key==="Enter"){e.preventDefault();if(items[cmdSelIdx])items[cmdSelIdx].click();return}
+  }
+  if(els.findBar.classList.contains("show")&&document.activeElement===els.findInput){
+    if(e.key==="Enter"){e.preventDefault();e.shiftKey?findPrev():findNext();return}
+    if(e.key==="Escape"){e.preventDefault();closeFind();return}
+  }
+  if(e.key==="Escape"){
+    closeCmd();closeSheet();closeDrawers();
+    els.inputModal.classList.remove("show");
+    els.newFileModal.classList.remove("show");
+    els.confirmModal.classList.remove("show");
+    els.settingsModal.classList.remove("show");
+    els.projSearchModal.classList.remove("show");
+    els.historyModal.classList.remove("show");
+    closeFind();
+  }
+});
+
+/* ============ Find events ============ */
+els.findInput.addEventListener("input",runFind);
+$("findNext").onclick=findNext;
+$("findPrev").onclick=findPrev;
+$("findClose").onclick=closeFind;
+$("replaceOne").onclick=replaceOne;
+$("replaceAll").onclick=replaceAll;
+$("findRegex").onclick=()=>{
+  findState.regex=!findState.regex;
+  $("findRegex").classList.toggle("active",findState.regex);
+  runFind();
+};
+
+/* ============ Wiring ============ */
+$("menu").onclick=()=>openDrawer("explorer");
+$("save").onclick=saveAll;
+$("cmdBtn").onclick=openCmd;
+$("newFileExp").onclick=()=>createFileInDir("");
+$("newFolderExp").onclick=createFolder;
+$("expClose").onclick=closeDrawers;
+$("outlineClose").onclick=closeDrawers;
+$("sheetClose").onclick=closeSheet;
+els.overlay.onclick=()=>{closeSheet();closeCmd();closeDrawers()};
+
+document.querySelectorAll(".modal").forEach(m=>{
+  m.addEventListener("click",e=>{
+    if(e.target===m)m.classList.remove("show");
+  });
+});
+
+$("newFileCancel").onclick=()=>els.newFileModal.classList.remove("show");
+$("newFileOk").onclick=confirmNewFile;
+els.newFileName.addEventListener("keydown",e=>{if(e.key==="Enter")$("newFileOk").click()});
+$("settingsClose").onclick=()=>els.settingsModal.classList.remove("show");
+$("settingsSave").onclick=saveSettings;
+$("projSearchClose").onclick=()=>els.projSearchModal.classList.remove("show");
+els.projSearchInput.addEventListener("input",runProjectSearch);
+$("projSearchRegex").onchange=runProjectSearch;
+$("projSearchCase").onchange=runProjectSearch;
+
+els.cmdSearch.oninput=e=>{cmdFilter=e.target.value;cmdSelIdx=0;renderCmd()};
+
+els.sSpaces.onclick=()=>{
+  if(!editor||!editor.getModel())return;
+  const cur=editor.getModel().getOptions().tabSize;
+  const next=cur===2?4:cur===4?8:2;
+  state.tabSize=next;
+  editor.getModel().updateOptions({tabSize:next,insertSpaces:true});
+  els.sSpaces.textContent="Spaces: "+next;
+  persist();
+  toast("مسافات: "+next,"ok");
+};
+els.sEol.onclick=()=>{
+  if(!editor||!editor.getModel())return;
+  const cur=editor.getModel().getEOL();
+  const next=cur==="\n"?"\r\n":"\n";
+  editor.getModel().setEOL(next);
+  els.sEol.textContent=cur==="\n"?"CRLF":"LF";
+  toast("نهاية السطر: "+(cur==="\n"?"CRLF":"LF"),"ok");
+};
+
+window.addEventListener("beforeunload",()=>{saveActiveCode();persist()});
+window.addEventListener("blur",()=>{saveActiveCode();persist()});
+window.addEventListener("orientationchange",()=>{setTimeout(()=>{if(editor)editor.layout()},250)});
+
+/* ============ Boot ============ */
+async function boot(){
+  const loaded=await loadState();
+  if(loaded){
+    state=loaded;
+    state.project=state.project||DEFAULT_STATE.project;
+    state.openTabs=state.openTabs||[];
+    state.history=state.history||{};
+    state.blockedFiles=state.blockedFiles||DEFAULT_BLOCKED.slice();
+    if(typeof state.tabSize!=="number")state.tabSize=2;
+    if(typeof state.wordWrap!=="string")state.wordWrap="on";
+    state.minimap=!!state.minimap;
+    if(typeof state.brackets!=="string")state.brackets="always";
+    state.formatOnPaste=state.formatOnPaste!==undefined?!!state.formatOnPaste:true;
+    state.autoSave=state.autoSave!==undefined?!!state.autoSave:true;
+  } else {
+    state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+  }
+
+  LANGS.forEach(x=>{
+    const o=document.createElement("option");
+    o.value=x[0];o.textContent=x[1];
+    els.newFileLang.appendChild(o);
+  });
+
+  if(typeof require==="undefined"){
+    showFatal("تعذّر تحميل مكتبات المحرر — تحقق من اتصال الإنترنت وأعد المحاولة");
+    return;
+  }
+
+  require.config({paths:{vs:"https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs"}});
+  require(["vs/editor/editor.main"],function(){
+    defineMonacoThemes();
+    applyTheme();
+
+    editor=monaco.editor.create(els.editor,{
+      value:"",language:"python",theme:(THEMES[state.theme]||THEMES.dark).monaco,
+      automaticLayout:true,
+      fontSize:state.font,
+      fontFamily:"'Fira Code','Cascadia Code',Consolas,monospace",
+      fontLigatures:true,lineHeight:1.5,
+      minimap:{enabled:!!state.minimap},
+      scrollBeyondLastLine:false,smoothScrolling:true,
+      tabSize:state.tabSize,insertSpaces:true,
+      wordWrap:state.wordWrap,lineNumbers:"on",
+      renderWhitespace:"selection",cursorBlinking:"smooth",
+      padding:{top:12,bottom:12},contextmenu:true,
+      autoClosingBrackets:state.brackets,autoClosingQuotes:"always",
+      autoIndent:"full",formatOnPaste:!!state.formatOnPaste,formatOnType:true,
+      suggestOnTriggerCharacters:true,quickSuggestions:{other:true,comments:true,strings:true},
+      wordBasedSuggestions:true,parameterHints:{enabled:true},
+      folding:true,showFoldingControls:"mouseover",
+      bracketPairColorization:{enabled:true},
+      guides:{bracketPairs:true,indentation:true},
+      renderLineHighlight:"all",
+      scrollbar:{verticalScrollbarSize:8,horizontalScrollbarSize:8}
+    });
+
+    applyEditorOptions();
+
+    if(state.openTabs.length&&state.activeTab&&findNode(state.activeTab)){
+      loadActiveIntoEditor();
+      renderTabs();
+    } else {
+      const first=allFiles()[0];
+      if(first){
+        state.activeTab=first.path;
+        state.openTabs=[first.path];
+        loadActiveIntoEditor();
+        renderTabs();
+      }
+    }
+
+    renderTree();
+    updateSize();
+    updateCursor();
+
+    editor.onDidChangeCursorPosition(()=>updateCursor());
+    editor.onDidChangeCursorSelection(()=>updateCursor());
+    editor.onDidChangeModelContent(()=>{
+      markDirty(true);
+      updateSize();
+      buildOutline();
+      if(state.autoSave!==false){
+        clearTimeout(saveTimer);
+        saveTimer=setTimeout(()=>{
+          saveActiveCode();
+          persist();
+          markDirty(false);
+        },1500);
+      }
+    });
+
+    historyTimer=setInterval(()=>{pushHistory();persist()},60000);
+    pushHistory();
+
+    setTimeout(()=>{
+      els.loader.classList.add("hidden");
+      setTimeout(()=>{if(els.loader.parentNode)els.loader.parentNode.removeChild(els.loader)},600);
+    },500);
+  },function(){
+    showFatal("تعذّر تحميل مكونات المحرر — تحقق من اتصال الإنترنت وأعد المحاولة");
+  });
+}
+boot();
+})();
+</script>
+</body>
+</html>
