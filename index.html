@@ -919,7 +919,7 @@ const DEFAULT_STATE={
   project:{
     name:"MY BOT",
     tree:[
-      {type:"file",name:"main.py",lang:"python",code:'# 𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜\nimport telebot\n\nbot = telebot.TeleBot("TOKEN")\n\n@bot.message_handler(commands=["start"])\ndef start(message):\n    bot.reply_to(message, "Hello!")\n\nif __name__ == "__main__":\n    bot.polling()\n'},
+      {type:"file",name:"app.py",lang:"python",code:'# 𝗘𝗛𝗔𝗕𝗔𝗜𝗛𝗔𝗪𝗕𝗔𝗡𝗜\nimport telebot\n\nbot = telebot.TeleBot("TOKEN")\n\n@bot.message_handler(commands=["start"])\ndef start(message):\n    bot.reply_to(message, "Hello!")\n\nif __name__ == "__main__":\n    bot.polling()\n'},
       {type:"file",name:"config.py",lang:"python",code:'# config\nBOT_TOKEN = ""\n'},
       {type:"file",name:"requirements.txt",lang:"plaintext",code:"pyTelegramBotAPI\n"},
       {type:"folder",name:"handlers",open:false,children:[
@@ -928,8 +928,8 @@ const DEFAULT_STATE={
       ]}
     ]
   },
-  openTabs:["main.py"],
-  activeTab:"main.py",
+  openTabs:["app.py"],
+  activeTab:"app.py",
   font:14,theme:"dark",autoSave:true,
   tabSize:2,wordWrap:"on",minimap:false,brackets:"always",
   formatOnPaste:true,
